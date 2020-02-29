@@ -26,8 +26,8 @@ class SimGui(tk.Frame):
     def create_widgets(self):
         self.canvas = tk.Canvas(width=1000, height=1000)
         self.canvas.grid(row=0, column=0, rowspan=15)
-        self.xLabel = tk.Label(self.master, text="Position x[m]:")
-        self.yLabel = tk.Label(self.master, text="Position y[m]:")
+        self.xLabel = tk.Label(self.master, text="Position x[cm]:")
+        self.yLabel = tk.Label(self.master, text="Position y[cm]:")
         self.fiLabel = tk.Label(self.master, text="Angle [deg]:")
         self.fiRadLabel = tk.Label(self.master, text="Angle [rad]:")
         self.xLabelCurrent = tk.Label(self.master, text="N/A")
@@ -69,7 +69,7 @@ class SimGui(tk.Frame):
         # Update labels
         gui.xLabelCurrent.configure(text="{}".format(robotxInCm))
         gui.yLabelCurrent.configure(text="{}".format(robotyInCm))
-        gui.fiLabelCurrent.configure(text="{}".format(robotfi*18000/math.pi))
+        gui.fiLabelCurrent.configure(text="{}".format(robotfi*180/math.pi))
         gui.fiRadLabelCurrent.configure(text="{}".format(robotfi))
 
         # Robot body
