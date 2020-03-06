@@ -7,4 +7,5 @@ python3 sim.py
 ## Suported features
 1. Position and rotation
 2. Lidar
+3. Collision
 
