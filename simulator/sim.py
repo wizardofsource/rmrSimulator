@@ -10,8 +10,7 @@ import os
 
 from copy import deepcopy
 from simgui import runGUI
-from geometry2 import llintersectpoint, dist, mmToM, mToCm, cmToMm
-
+from geometry2 import llintersectpoint, dist, mmToM, mToCm, cmToMm, pointToLineDistance, cmToM, mToMm
 
 def pause():
     p = input("Press the <Enter> key to continue...")
@@ -94,8 +93,8 @@ class MapParser:
                 if not ps:
                     continue
                 xystr = ps[1:-1].split(",")
-                x = float(xystr[0])
-                y = float(xystr[1])
+                x = cmToM(float(xystr[0])) # convert from centimeters to meters 
+                y = cmToM(float(xystr[1])) 
                 points.append([x,y])
                 #print("parsed %s", (points, ))
             if i==0:
@@ -141,8 +140,8 @@ class Lidar:
 
     def update(self, deltatime, robot, areamap, locks):
         locks['robotposlock'].acquire()
-        rx = mToCm(robot.pos.x)
-        ry = mToCm(robot.pos.y)
+        rx = robot.pos.x
+        ry = robot.pos.y
         locks['robotposlock'].release()
 
         clines = [] # collision lines
@@ -212,12 +211,38 @@ class Robot:
         self.rightIRC = rightIRC
         self.lidar = lidar
 
+    def isCollision(self, se):
+        bl = se.areamap.boundarylines
+        x = self.pos.x
+        y = self.pos.y
+
+        for l in bl:
+            d = pointToLineDistance([x, y], l)
+            if self.d > d:
+                return True
+
+        for o in se.areamap.objects:
+            for l in o.lines:
+                d = pointToLineDistance([x, y], l)
+                if self.d > d:
+                    print("Collision d=%s" %(d, ))
+                    return True
+        return False
+
+
     def update(self, deltatime, locks, se):
         locks['robotposlock'].acquire()
         jointspeed = (self.speeds.right + self.speeds.left) / 2
         #print("Jointed speed: %s" % (jointspeed,))
+        rollbackx = self.pos.x;
+        rollbacky = self.pos.y;
         self.pos.x += math.cos(self.fi)*jointspeed*deltatime
         self.pos.y -= math.sin(self.fi)*jointspeed*deltatime
+        # Comment this if it's too slow
+        if self.isCollision(se):
+            print("COLLISION")
+            self.pos.x = rollbackx;
+            self.pos.y = rollbacky;
         #print("ROBOT POS: %s %s" % (self.pos.x , self.pos.y))
         self.w = (self.speeds.right - self.speeds.left)/self.d
         self.fi += self.w*deltatime
@@ -303,7 +328,7 @@ def lidarjob(freq, soc, locks, chunk):
         locks['robotposlock'].acquire()
         robotfi = se.robot.fi 
         locks['robotposlock'].release()
-        packeddata += struct.pack(laserdatastructstr, 1, (robotfi + fi)*180/math.pi, cmToMm(dist)) # here dist is in cm but mm are required also looks like rotation is swapped 
+        packeddata += struct.pack(laserdatastructstr, 1, (robotfi + fi)*180/math.pi, mToMm(dist)) # here dist is in cm but mm are required also looks like rotation is swapped 
         if num == chunk:
             num = 0
             soc.sendto(packeddata, ('localhost', LIDARPORT_SEND))

@@ -25,3 +25,28 @@ def mToCm(m):
 
 def cmToMm(cm):
     return cm*10
+
+def cmToM(cm):
+    return cm/100
+
+def mToMm(m):
+    return m*1000
+
+def pointToLineDistance(point, line):
+    x3,y3 = point
+    x1,y1 = line[0]
+    x2,y2 = line[1]
+    px = x2-x1
+    py = y2-y1
+    norm = px*px + py*py
+    u =  ((x3 - x1) * px + (y3 - y1) * py) / float(norm)
+    if u > 1:
+        u = 1
+    elif u < 0:
+        u = 0
+    x = x1 + u * px
+    y = y1 + u * py
+    dx = x - x3
+    dy = y - y3
+    dist = (dx*dx + dy*dy)**.5
+    return dist
