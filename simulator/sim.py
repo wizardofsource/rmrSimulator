@@ -142,6 +142,7 @@ class Lidar:
         locks['robotposlock'].acquire()
         rx = robot.pos.x
         ry = robot.pos.y
+        rf = robot.fi
         locks['robotposlock'].release()
 
         clines = [] # collision lines
@@ -156,7 +157,7 @@ class Lidar:
         mind = None # Ray can intersect many lines, closests one is the correct one
 
         for l in clines:
-            ip = llintersectpoint(rx, ry, rx + 1000*math.cos(self.fi), ry + 1000*math.sin(self.fi), l[0][0], l[0][1], l[1][0], l[1][1])
+            ip = llintersectpoint(rx, ry, rx + 1000*math.cos(rf + self.fi), ry + 1000*math.sin(rf + self.fi), l[0][0], l[0][1], l[1][0], l[1][1])
             if ip is not None:
                 #print("found ip: %s" % ([rx, ry, rx + 1000*math.cos(self.fi), ry - 1000*math.sin(self.fi)], ))
                 #print("line: %s" % ([l[0][0], l[0][1], l[1][0], l[1][1]], ))
@@ -237,7 +238,8 @@ class Robot:
         rollbackx = self.pos.x;
         rollbacky = self.pos.y;
         self.pos.x += math.cos(self.fi)*jointspeed*deltatime
-        self.pos.y -= math.sin(self.fi)*jointspeed*deltatime
+        self.pos.y += math.sin(self.fi)*jointspeed*deltatime
+        # print("FI : %s " %(self.fi))
         # Comment this if it's too slow
         if self.isCollision(se):
             print("COLLISION")
@@ -265,7 +267,7 @@ class Robot:
             speedinm = mmToM(speed)
             print("SPEEDINM : %s" % (speedinm, ))
             if radius == 1:
-                print("only rotate")
+                print("only rotate %s" % (speedinm, ))
                 self.onlyRotate(speedinm)
             elif radius == 0:
                 print("only translate")
@@ -328,7 +330,7 @@ def lidarjob(freq, soc, locks, chunk):
         locks['robotposlock'].acquire()
         robotfi = se.robot.fi 
         locks['robotposlock'].release()
-        packeddata += struct.pack(laserdatastructstr, 1, (robotfi + fi)*180/math.pi, mToMm(dist)) # here dist is in cm but mm are required also looks like rotation is swapped 
+        packeddata += struct.pack(laserdatastructstr, 1, fi*180/math.pi, mToMm(dist)) # here dist is in cm but mm are required also looks like rotation is swapped 
         if num == chunk:
             num = 0
             soc.sendto(packeddata, ('localhost', LIDARPORT_SEND))
