@@ -432,7 +432,7 @@ def runSensorSender(locks, se):
 
 if __name__ == '__main__':
     se = []
-    with open("newmap.txt", 'r') as f:
+    with open("priestor.txt", 'r') as f:
         se = SimEnvironment(MapParser.parse(f.read()), Robot())
     print(se.areamap)
     print(se.areamap.boundarylines)
