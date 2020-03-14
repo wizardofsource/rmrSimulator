@@ -307,10 +307,12 @@ class Robot:
         #   => vright - vleft =  d*v_tan/r_stredu
         # ===> vright = v_tan(1 + (d/2)/r_stredu)
         # ===> vleft = v_tan(1 - (d/2)/r_stredu)
-        if radiusinm > 0.001:
-            r_stredu = radiusinm + self.d/2
-        else:
-            r_stredu = radiusinm - self.d/2
+
+        # if radiusinm > 0.001:
+        #     r_stredu = radiusinm + self.d/2
+        # else:
+        #     r_stredu = radiusinm - self.d/2
+        r_stredu = radiusinm
             
         v_tan = speedinm*radiusinm/r_stredu
         self.speeds.right = v_tan*(1 + (self.d/2)/r_stredu)
