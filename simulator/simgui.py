@@ -3,6 +3,7 @@ import threading
 import itertools
 import math
 
+import sim
 from geometry2 import mToCm, cmToM
 
 gui = []
@@ -92,9 +93,18 @@ class SimGui(tk.Frame):
 
         gui.master.after(16, SimGui.updateGUI)
 
+def createExitFcn(root):
+    def exitfcn():
+        if sim.exitsignal:
+            root.quit()
+        else:
+            root.after(16, exitfcn)
+    return exitfcn
+
 def runGUI(locks, se):
     global gui
     root = tk.Tk()
     gui = SimGui(locks, se, master=root)
     root.after(16, SimGui.updateGUI)
+    root.after(16, createExitFcn(root))
     root.mainloop()

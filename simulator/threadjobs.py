@@ -3,8 +3,11 @@ import time
 import threading
 import struct
 import math 
+import sys
 
 import simenv
+import sim
+
 from debug import printd, pause
 from geometry2 import mToMm
 
@@ -25,7 +28,7 @@ def lidarjob(freq, soc, locks, chunk):
     global lidartimer
     num = 0
     packeddata = b""
-    while True: 
+    while not sim.exitsignal: 
         lidartimer = time.time()
         locks['sensorlock'].acquire()
         fi = simenv.se.robot.lidar.fi 
@@ -59,7 +62,7 @@ def runLidarSenderThread(locks):
 def robotCommandReaderJob(freq, sock, se):
     sock.bind(('127.0.0.1', ROBOTPORT_RECV))
     printd("watining for cmds.")
-    while True:
+    while not sim.exitsignal:
         cmd = sock.recv(16)
         printd("got: %s ", cmd)
         simenv.se.robot.execute(list(cmd), cmd) 
@@ -72,7 +75,7 @@ def runRobotCommandReaderThread(se):
 
 def updateJob(freq, se, locks):
     oldtime = time.time()
-    while True:
+    while not sim.exitsignal:
         newtime = time.time()
         simenv.se.robot.update(newtime - oldtime, locks, se)
         oldtime = newtime
@@ -112,7 +115,7 @@ def addChecksum2(datawithheader):
     return datawithheader + struct.pack("B", cs % 256)
 
 def sensorSendingJob(freq, locks, se, sock):
-    while True:
+    while not sim.exitsignal:
         payload = wrapSubPayload(1, getBasicSensorDataFeedback(sock, locks, se)) + wrapSubPayload(4, getInertialSensorFeedback(sock, locks, se)) # for some reason they don't use the standard header (probably because UDP)
         # for some reason they also add payload without checksum to payload with checksum w/e
         payload = addChecksum2(struct.pack("B", len(payload))  + payload)
@@ -124,7 +127,7 @@ def sensorSendingJob(freq, locks, se, sock):
 
 def runSensorSenderThread(locks, se):
     sock = createUDPSocket()
-    launchAsThread(sensorSendingJob, args=(50, locks, se, sock))
+    return launchAsThread(sensorSendingJob, args=(50, locks, se, sock))
 
 def resetRobot(locks, se):
     locks['robotposlock'].acquire()
@@ -135,10 +138,12 @@ def resetRobot(locks, se):
 
 def CLIReaderJob(freq, locks, se):
     printd("CLI reader job got args: %s %s %s" % (freq, locks, se))
-    while True:
+    while not sim.exitsignal:
         cmd = input(" Command :> ")
         if cmd == "reset":
             simenv.se.robot.enqueueRequest('reset')
+        if cmd == "exit":
+            sim.exitsignal = True
         time.sleep(1/freq)
 
 def runCLIReaderThread(locks, se):
