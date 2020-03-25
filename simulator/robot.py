@@ -1,5 +1,6 @@
 import struct
 import math
+import sys
 
 from helpertypes import XYPair, LeftRightPair
 from sensors import Gyro, IRCSensor, Lidar
@@ -10,6 +11,17 @@ def idf(x):
     return x
 
 robotDefaultCtor = {"r" : (idf, [0.035]), "d" : (idf, [0.23]), "pos" : (XYPair, [1,1]), "speeds" : (LeftRightPair, [0,0]), "fi" : (idf, [math.pi/2]), "w" : (idf, [0]), "gyro" : (Gyro, []), "leftIRC" : (IRCSensor, []), "rightIRC" : (IRCSensor, []), "lidar" : (Lidar, [0, 0, 2*math.pi*7.9]), "requestQueue" : (idf, [[]])}
+#2*math.pi*7.9
+
+robotAttribCtors = {"pos": lambda x: (XYPair, x), "fi" : lambda x: (idf, [x])}
+
+def fillFromIni(ctor, inidict):
+    for k,v in inidict['robot'].items():
+        if k not in robotAttribCtors:
+            print("Wrong syntax in inifile in section [Robot] at key %s" % (k, ))
+            sys.exit(1)
+        robotDefaultCtor[k] = robotAttribCtors[k](eval(inidict['robot'][k]));
+    return robotDefaultCtor
 
 class Robot:
     def __init__(self, ctordict): # r=0.035, d=0.23, pos=XYPair(1,1), speeds=LeftRightPair(0,0), fi=0, w=0, gyro = Gyro(), leftIRC = IRCSensor(), rightIRC = IRCSensor(), lidar = Lidar(0, 0, 2*math.pi*7.9)): # w should be 2*pi*7.9
@@ -77,6 +89,10 @@ class Robot:
         printd("ROBOT POS: %s %s" % (self.pos.x , self.pos.y))
         self.w = (self.speeds.right - self.speeds.left)/self.d
         self.fi += self.w*deltatime
+        while (self.fi > math.pi*2):
+            self.fi = self.fi - 2*math.pi
+        while (self.fi < 0):
+            self.fi = self.fi + 2*math.pi
         locks['robotposlock'].release()
 
     def updateSensors(self, deltatime, locks, se):
