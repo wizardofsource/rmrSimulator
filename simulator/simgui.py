@@ -26,8 +26,8 @@ class SimGui(tk.Frame):
 
     def create_widgets(self):
         self.canvas = tk.Canvas(width=1000, height=700)
-        self.canvas.width = 1000;
-        self.canvas.height = 700;
+        self.canvas.width = 1000
+        self.canvas.height = 700
         self.canvas.grid(row=0, column=0, rowspan=15)
         self.xLabel = tk.Label(self.master, text="Position x[m]:")
         self.yLabel = tk.Label(self.master, text="Position y[m]:")
@@ -45,6 +45,7 @@ class SimGui(tk.Frame):
         self.yLabelCurrent.grid(row=1,column=2)
         self.fiLabelCurrent.grid(row=2,column=2)
         self.fiRadLabelCurrent.grid(row=3,column=2)
+        self.master.bind("<Key>", lambda e: self.se.robot.enqueueRequest('reset') if e.char == 'r' else "" )
 
     @staticmethod
     def updateGUI():

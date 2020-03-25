@@ -129,13 +129,6 @@ def runSensorSenderThread(locks, se):
     sock = createUDPSocket()
     return launchAsThread(sensorSendingJob, args=(50, locks, se, sock))
 
-def resetRobot(locks, se):
-    locks['robotposlock'].acquire()
-    locks['sensorlock'].acquire()
-    simenv.se.robot = Robot()
-    locks['sensorlock'].release()
-    locks['robotposlock'].release()
-
 def CLIReaderJob(freq, locks, se):
     printd("CLI reader job got args: %s %s %s" % (freq, locks, se))
     while not sim.exitsignal:

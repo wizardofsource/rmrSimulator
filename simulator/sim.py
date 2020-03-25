@@ -18,7 +18,7 @@ if __name__ == '__main__':
     with open(inifile['environment']['mapfile'], 'r') as f:
         simenv.se = simenv.SimEnvironment(simenv.MapParser.parse(f.read()), Robot(fillFromIni(robotDefaultCtor, inifile)))
     runningThreads = []
-    threadJobs = [runLidarSenderThread, runSensorSenderThread, runRobotCommandReaderThread, runUpdateThread, runCLIReaderThread]
+    threadJobs = [runLidarSenderThread, runSensorSenderThread, runRobotCommandReaderThread, runUpdateThread] #, runCLIReaderThread]
     threadArgs = [[threadjobs.locks], [threadjobs.locks, simenv.se], [simenv.se], [threadjobs.locks, simenv.se], [threadjobs.locks, simenv.se]]
     for tj, a in zip(threadJobs, threadArgs):
         runningThreads.append(tj(*a))
