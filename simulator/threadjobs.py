@@ -22,7 +22,7 @@ extrareqstructstr = "BBBBBBIIIBIII"
 robotdatastructstr = "QhHHQbhHQbQQQQH" + extrareqstructstr
 
 lidartimer = 0
-locks = { 'robotposlock' : threading.Lock(), 'sensorlock' : threading.Lock()}
+locks = { 'robotposlock' : threading.Lock(), 'sensorlock' : threading.Lock(), 'telegraphlock' : threading.Lock()}
 
 def lidarjob(freq, soc, locks, chunk):
     global lidartimer
@@ -47,7 +47,11 @@ def lidarjob(freq, soc, locks, chunk):
             num+=1
         time.sleep(1/freq)
          
-def createUDPSocket():
+def createUDPSocket(bind=False, port=0):
+    if bind:
+        soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        soc.bind(("127.0.0.1", port))
+        return soc
     return socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 def launchAsThread(f, args):

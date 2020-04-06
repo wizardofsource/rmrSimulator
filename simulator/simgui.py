@@ -5,15 +5,31 @@ import math
 
 import sim
 from geometry2 import mToCm, cmToM
+from telegraph import telegraphPoints, telegraphReset
+from threadjobs import locks
 
 gui = []
 
-def drawoval(canvas, radius, location):
-    canvas.create_oval(location[0] - radius, location[1] + radius, location[0] + radius, location[1] - radius)
+def drawoval(canvas, radius, location, cfill="white", coutline="black"):
+    canvas.create_oval(location[0] - radius, location[1] + radius, location[0] + radius, location[1] - radius, fill=cfill, outline=coutline)
 
 def flatten(list_of_lists):
     """Flatten one level of nesting"""
     return itertools.chain.from_iterable(list_of_lists)
+
+def drawgrid(canvas, offset, sizex=6,sizey=5):
+    for x in range(0, sizex+1):
+        canvas.create_line(offset + mToCm(x), canvas.height - offset, offset + mToCm(x), canvas.height - offset - mToCm(sizey), dash=(4,2), fill="ivory3")
+        canvas.create_text(offset + mToCm(x), canvas.height - offset + 5, anchor=tk.N, text="%s"%(x,), fill="gray20")
+    for y in range(0, sizey+1):
+        canvas.create_line(offset, canvas.height - mToCm(y) - offset, offset + mToCm(sizex), canvas.height - offset - mToCm(y), dash=(4,2), fill="ivory3")
+        canvas.create_text(offset- 5, canvas.height - mToCm(y) - offset, anchor=tk.E, text="%s"%(y,), fill="gray20")
+
+
+def resetHandler(e, se):
+    if e.char == 'r':
+        se.robot.enqueueRequest('reset')
+        telegraphReset(locks)
 
 class SimGui(tk.Frame):
     def __init__(self, locks, se, master=None, canvasoffset= 100):
@@ -45,7 +61,8 @@ class SimGui(tk.Frame):
         self.yLabelCurrent.grid(row=1,column=2)
         self.fiLabelCurrent.grid(row=2,column=2)
         self.fiRadLabelCurrent.grid(row=3,column=2)
-        self.master.bind("<Key>", lambda e: self.se.robot.enqueueRequest('reset') if e.char == 'r' else "" )
+        self.master.bind("<Key>", lambda e: resetHandler(e, self.se))
+
 
     @staticmethod
     def updateGUI():
@@ -60,8 +77,10 @@ class SimGui(tk.Frame):
         gui.locks['robotposlock'].acquire()
         robotx = gui.se.robot.pos.x
         roboty = gui.se.robot.pos.y
-        robotdInCm = mToCm(gui.se.robot.d)
+        robotrInCm = mToCm(gui.se.robot.r)
         robotfi = gui.se.robot.fi
+        robotstartingfi  = gui.se.robot.resetCtor['fi'][1][0]
+        robotstartingpos = gui.se.robot.resetCtor['pos'][1]
         robotw = gui.se.robot.w
         gui.locks['robotposlock'].release()
 
@@ -76,21 +95,34 @@ class SimGui(tk.Frame):
         gui.fiLabelCurrent.configure(text="{}".format(robotfi*180/math.pi))
         gui.fiRadLabelCurrent.configure(text="{}".format(robotfi))
 
+        # Grid 
+        drawgrid(gui.canvas, gui.canvasoffset)
+
         # Robot body
         robotxInCm = mToCm(robotx)
         robotyInCm = mToCm(roboty)
-        drawoval(gui.canvas, robotdInCm, [robotxInCm + gui.canvasoffset, gui.canvas.height - robotyInCm - gui.canvasoffset])
+        drawoval(gui.canvas, robotrInCm, [robotxInCm + gui.canvasoffset, gui.canvas.height - robotyInCm - gui.canvasoffset])
 
         # Lidar points
         #print("drawing ipointq %s" % (ipointq))
         for p in ipointq:
             drawoval(gui.canvas, 2, [mToCm(p[0]) + gui.canvasoffset, gui.canvas.height - mToCm(p[1]) - gui.canvasoffset])
 
+        gui.locks['telegraphlock'].acquire()
+        for tp in telegraphPoints:
+            tpxRot = math.cos(robotstartingfi)*tp[0] - math.sin(robotstartingfi)*tp[1]
+            tpyRot = math.sin(robotstartingfi)*tp[0] + math.cos(robotstartingfi)*tp[1]
+            tpxAbs = robotstartingpos[0] + tpxRot
+            tpyAbs = robotstartingpos[1] + tpyRot
+            drawoval(gui.canvas, 10, [mToCm(tpxAbs) + gui.canvasoffset, gui.canvas.height - mToCm(tpyAbs) - gui.canvasoffset], cfill="red")
+        gui.locks['telegraphlock'].release()
+            
+
         # lidar line
         # gui.canvas.create_line(robotxInCm + gui.canvasoffset, robotyInCm + gui.canvasoffset, gui.canvasoffset + robotxInCm + 1000*math.cos(lidarfi), gui.canvasoffset + robotyInCm - 1000*math.sin(lidarfi) )
 
         # Orientation vector
-        gui.canvas.create_line(robotxInCm + gui.canvasoffset, gui.canvas.height - robotyInCm - gui.canvasoffset, gui.canvasoffset +  robotxInCm + robotdInCm*math.cos(robotfi), gui.canvas.height - gui.canvasoffset - robotyInCm - robotdInCm*math.sin(robotfi))
+        gui.canvas.create_line(robotxInCm + gui.canvasoffset, gui.canvas.height - robotyInCm - gui.canvasoffset, gui.canvasoffset +  robotxInCm + robotrInCm*math.cos(robotfi), gui.canvas.height - gui.canvasoffset - robotyInCm - robotrInCm*math.sin(robotfi))
 
         gui.master.after(16, SimGui.updateGUI)
 
