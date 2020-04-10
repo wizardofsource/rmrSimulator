@@ -10,7 +10,7 @@ from debug import printd, pause
 def idf(x):
     return x
 
-robotDefaultCtor = {"r" : (idf, [0.175]), "d" : (idf, [0.23]), "pos" : (XYPair, [1,1]), "speeds" : (LeftRightPair, [0,0]), "fi" : (idf, [math.pi/2]), "w" : (idf, [0]), "gyro" : (Gyro, []), "leftIRC" : (IRCSensor, []), "rightIRC" : (IRCSensor, []), "lidar" : (Lidar, [0, 0, 4*math.pi*7.9]), "requestQueue" : (idf, [[]])}
+robotDefaultCtor = {"r" : (idf, [0.175]), "d" : (idf, [0.23]), "pos" : (XYPair, [1,1]), "speeds" : (LeftRightPair, [0,0]), "fi" : (idf, [math.pi/2]), "w" : (idf, [0]), "gyro" : (Gyro, []), "leftIRC" : (IRCSensor, []), "rightIRC" : (IRCSensor, []), "lidar" : (Lidar, [0, 0, 2*math.pi*7.9]), "requestQueue" : (idf, [[]])}
 #2*math.pi*7.9
 
 robotAttribCtors = {"pos": lambda x: (XYPair, x), "fi" : lambda x: (idf, [x])}
