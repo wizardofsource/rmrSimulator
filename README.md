@@ -11,4 +11,4 @@ To reset the robot state, type 'reset' into the CLI.
 1. Position and rotation
 2. Lidar
 3. Collision
-
+4. Press R to reset
