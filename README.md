@@ -5,8 +5,6 @@ Make sure that in your client program you are connecting to 127.0.0.1 instead of
 
 python3 sim.py
 
-To reset the robot state, type 'reset' into the CLI.
-
 ## Suported features
 1. Position and rotation
 2. Lidar
